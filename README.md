@@ -5,6 +5,7 @@ Diseño e implementacion de libreria que ofrece un conjunto de clases que facili
 
 ![Alt text](DC-Engine.png)
 
+Algunas de las pautas en cuanta para el diseño e implementacion:
 - *Patron pool de componentes:* cuando un conjunto de componentes se destruyen(eliminan) y crean(añaden) con frecuencia => este patron permite reutilizar(suspendiendolo/cambiando de posicion/estado en lugar de quitar y añadir componentes a un array dianmico) los componentes reduciendo el costo de redimnecionar por ejemplo un array de componentes en memoria cada ves que se destruyen. Por ejemplo systema de particulas, balas, etc.
   
 - *Uso de estructura de datos* array para container o partes de componentes que permite una gran velocidad de recorrido de componentes para sistema de deteccion de colisiones, actualizacion de estado en cada frame, etc. Esto dado que los array son un conjunto consecutivo reservado(direcciones) en memoria, lo que permite una gran eficiencia para el recorrido/lectura de componentes (Teniendo en cuanta el problema de rendimiento para casos contemplados por item "patron pool de componentes").
