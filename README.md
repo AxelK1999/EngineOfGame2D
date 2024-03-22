@@ -3,7 +3,7 @@ Diseño e implementacion de libreria que ofrece un conjunto de clases que facili
 
 **DIAGRAMA DE CLASE:**
 
-![Alt text](LibraryGame2D-DC.png)
+![Alt text](LibraryGame2DDC.png)
 
 Algunas de las pautas realizadas para el diseño e implementacion:
 - *Patron pool de componentes:* cuando un conjunto de componentes se destruyen(eliminan) y crean(añaden) con frecuencia, entonces, este patron permite reutilizar(suspendiendo o cambiando de posicion/estado en lugar de quitar y añadir) los componentes reduciendo el costo de redimnecionar por ejemplo un array de componentes en memoria cada ves que se destruyen. Por ejemplo systema de particulas, balas, etc.
