@@ -14,7 +14,8 @@ Caracteristicas tenidas en cuenta:
 Asi como el solo detectar la colision una sola vez entre componetes en el metodo "detecteColision" de modo de reducir la complejidad N^2 : 2=4, 3=6, 4=16, 5=25, 6=36, .. -- a --> 2=1, 3=3, 4=6, 5=10, 6=15, .. .
 Implementacion de filtro de colision en containers: de modo de reducir la verificacion de colisiones en conjunto de componentes ademas se categorizar componentes que seran colisionables. ETC.
 
-- *Investigacion e implementacion de patrones de diseño* ([https://refactoring.guru/es/design-patterns]), algunos de ellos :
+- *Investigacion e implementacion de patrones de diseño*, algunos de ellos :
   - Estrucutrales : Composite, Flyweight
   - Comportamiento : Obsarver, State
-  - Creacionales : Factory Method, Singleton, Builder 
+  - Creacionales : Factory Method, Singleton, Builder
+- Referencias : [Patterns.dev](https://www.patterns.dev/), [Refactoring.guru](https://refactoring.guru/es/design-patterns) .
