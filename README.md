@@ -17,5 +17,5 @@ Implementacion de filtro de colision en containers: de modo de reducir la verifi
 - *Investigacion e implementacion de patrones de diseño*, algunos de ellos :
   - Estrucutrales : Composite, Flyweight
   - Comportamiento : Obsarver, State
-  - Creacionales : Factory Method, Singleton, Builder
+  - Creacionales :Singleton, Builder
 - Referencias : [Patterns.dev](https://www.patterns.dev/), [Refactoring.guru](https://refactoring.guru/es/design-patterns) .
