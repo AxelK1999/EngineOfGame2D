@@ -10,6 +10,9 @@ Características tenidas en cuenta:
   
 - *Uso de estructura de datos:* uso de arrays para container o partes de componentes que permite una gran velocidad de recorrido/lectura secuencial de componentes para sistema de detección de colisiones, actualización de estado en cada frame, etc. Esto dado que los arrays son un conjunto consecutivo reservado(direcciones) de espacios en memoria, lo que permite una gran velocidad del recorrido/lectura de componentes (Teniendo en cuanta el problema de redimension en arrays que afectan al rendimiento, se encuentran estos casos contemplados por ítem anterior "patrón pool de componentes").
   
+  ![image](https://github.com/AxelK1999/EngineOfGame2D/assets/69541858/5f96cc71-f7d6-4888-b726-936644e29621)
+
+  
 - *Análisis de complejidad:* se busca reducir lo más posible la complejidad algorítmica, implementando para colliders polígonos 2D o conjunto de componentes(paredes, estructuras, etc. colisionables) un Rectángulo 2D (colliderAABB) que los encerrara, de este modo es menos costoso de verificar colisiones entre rectángulos que polígonos complejos o muchos componentes que pueden no estar colisionando, entonces de colisionar con el AABB entonces se procede a ejecutar los algoritmos para verificar polígonos(más costosos al verificar con cada intersección entre segmentos) o recorrer cada componente de un conjunto componentes dentro de espacio de colisión AABB, entonces, logramos reducir el número de verificaciones de colisiones (algoritmos costosos) cuando se tiene un gran conjunto de componentes, es decir la complejidad algorítmica (costo) cuando aumenta "N:número de componentes/polígonos en escena". 
 Así como el solo detectar la colisión una sola vez entre componentes en el método "detecteColision" de modo de reducir la complejidad N^2 : 2=4, 3=6, 4=16, 5=25, 6=36, … -- a --> 2=1, 3=3, 4=6, 5=10, 6=15, … 
 Implementación de filtro de colisión en containers: de modo de reducir la verificación de colisiones en conjunto de componentes, además de categorizar componentes que serán colisionables. ETC.
@@ -17,5 +20,14 @@ Implementación de filtro de colisión en containers: de modo de reducir la veri
 - *Investigación e implementación de patrones de diseño*, algunos de ellos:
   - Estructurales: Composite, Flyweight
   - Comportamiento: Obsarver, State
-  - Creacionales: Singleton, Builder
-- Referencias : [Patterns.dev](https://www.patterns.dev/), [Refactoring.guru](https://refactoring.guru/es/design-patterns) .
+  - Creacionales: Singleton, Builder, Factory Mehod
+- Referencias :
+  - [Patterns.dev](https://www.patterns.dev/) - [Refactoring.guru](https://refactoring.guru/es/design-patterns) .
+  - Vallejo Fernández, D., Martín Angelina, C. (2015). Desarrollo de Videojuegos: Un Enfoque Práctico (Volumen 1. Arquitectura del Motor). David Vallejo, Carlos González y David Villa (Eds.). Pp. 14-26, Pp. 111-147, Pp. 161-177 .
+  - https://www.freecodecamp.org/espanol/news/la-complejidad-de-los-algoritmos-simples-y-las-estructuras-de-datos-en-js/ .
+  - https://es.javascript.info/array#performance .
+  - https://docs.unity3d.com/es/530/Manual/ExecutionOrder.html
+  - https://brm.io/matter-js/docs/
+  - Goycoechea, S. y Wallace, T. Fingsics: simulador de colisiones masivas [en línea]. Tesis de grado. Montevideo : Udelar. FI. INCO, 2021.
+  - https://docs.unity3d.com/es/530/Manual/ControllingGameObjectsComponents.html
+ 
