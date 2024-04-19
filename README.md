@@ -22,7 +22,7 @@ Características tenidas en cuenta:
 
 - *Investigación e implementación de patrones de diseño*, algunos de ellos:
   - Estructurales: Composite, Flyweight
-  - Comportamiento: Obsarver, State
+  - Comportamiento: Obsarver, State, Strategy
   - Creacionales: Singleton, Builder, Factory Mehod
 - Referencias :
   - [Patterns.dev](https://www.patterns.dev/) - [Refactoring.guru](https://refactoring.guru/es/design-patterns) .
