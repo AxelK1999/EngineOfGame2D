@@ -4,6 +4,8 @@ Diseño e implementación de librería que ofrece un conjunto de clases que faci
 **DIAGRAMA DE CLASE:**
 
 ![Alt text](DC-LibreriaEngine2D-Js.png)
+![image](https://github.com/AxelK1999/EngineOfGame2D/assets/69541858/9b3d1730-d318-425c-b65c-5e890d0f5f64)
+
 
 Características tenidas en cuenta:
 - *Patrón pool de componentes:* técnica/comportamiento que permite mejorar el rendimiento al reutilizar componentes previamente creados en lugar de crear nuevos rápidamente. Utilizado en situaciones donde la creación(añadir) y destrucción(eliminar) frecuentemente de objetos es costosa, como lo es en los arrays, donde la inserción o eliminar elementos en la estructura implica un costo elevado por su naturaleza, donde al estar completa de elemento se realiza un proceso de reasignación a un nuevo bloque de memoria contigua más amplio y copia del resto elementos con el nuevo al mismo. (Sistema de partículas, balas, etc). Esto puede implicar la sustitución de un elemento o manejo de estados de los mismos dentro del array, sin afectar así la longitud. 
