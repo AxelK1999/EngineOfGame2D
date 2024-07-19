@@ -28,6 +28,7 @@ Características tenidas en cuenta:
   - Creacionales: Singleton, Builder, Factory Mehod
 - Referencias :
   - [Patterns.dev](https://www.patterns.dev/) - [Refactoring.guru](https://refactoring.guru/es/design-patterns) .
+  - http://paulbourke.net/geometry/polygonmesh/
   - Vallejo Fernández, D., Martín Angelina, C. (2015). Desarrollo de Videojuegos: Un Enfoque Práctico (Volumen 1. Arquitectura del Motor). David Vallejo, Carlos González y David Villa (Eds.). Pp. 14-26, Pp. 111-147, Pp. 161-177 .
   - https://www.freecodecamp.org/espanol/news/la-complejidad-de-los-algoritmos-simples-y-las-estructuras-de-datos-en-js/ .
   - https://es.javascript.info/array#performance .
