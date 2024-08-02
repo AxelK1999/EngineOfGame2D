@@ -1,6 +1,4 @@
  /** @type {HTMLCanvasElement} */
-
-import Container from "./Conteiner.js";
 import CanvasRender from "./canvasRenderer.js";
 import TecladoControl from "./keyControls.js"
 import mouseControl from "./mouseControls.js"
