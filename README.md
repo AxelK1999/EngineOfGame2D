@@ -1,10 +1,16 @@
 # EngineOfGame2D
-Diseño e implementación de librería que ofrece un conjunto de clases que facilitan el desarrollo de videojuegos 2D. Este proyecto tiene como objetivo comprender el funcionamiento de un motor de juego 2D e implementar patrones de diseño, análisis de complejidad algorítmica, correcto uso de estructuras de datos para mayor rendimiento del mismo. Permite el manejo (transformaciones y comunicaciones) entre objetos complejos compuestos con diferentes componentes, sistema de colisiones, renderizado, etc. {Estado: En desarrollo}
+Librería de clases para la creación, manejo de transformaciones(escalado, rotación, desplazamiento) de componentes simples y compuestos, comunicación de eventos entre los mismos, sistema de colisiones para un gran número de componentes en la escena, captura de eventos de entrada(mouse, teclado y tochs), sistema de renderizado, etc. Este proyecto tiene como objetivo comprender a grandes rasgos el funcionamiento de un motor de juego 2D e implementar patrones de diseño, análisis de complejidad algorítmica, estructuras de datos buscando el mayor rendimiento y el uso de buenas prácticas de programación. 
+
+Esta librería busca facilitar el desarrollo de juegos 2D web simples que no requieren de sistemas de física y ayudar médiente un diagrama de clases a comprender la implementación de diferentes patrones de diseño. 
 
 **DIAGRAMA DE CLASE:**
 
-![Alt text](DC-LibreriaEngine2D-Js.png)
-![image](https://github.com/AxelK1999/EngineOfGame2D/assets/69541858/9b3d1730-d318-425c-b65c-5e890d0f5f64)
+![image](https://github.com/user-attachments/assets/23441a8d-532d-4b6b-abd6-62b77bb43096)
+
+Referencia de elementos utilizados o tenidas en cuenta para el diagrama de clases de uml:
+
+![image](https://github.com/user-attachments/assets/91904048-1966-41d5-8439-59cd287d1de5)
+
 
 
 Características tenidas en cuenta:
