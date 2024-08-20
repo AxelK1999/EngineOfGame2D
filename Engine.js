@@ -146,6 +146,7 @@ export class Utilities{
     }
 
 }
+
 export class Vector2D {
     x;
     y;
