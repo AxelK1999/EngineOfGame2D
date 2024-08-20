@@ -2396,8 +2396,4 @@ class Camara{
     static desplazar(nuevaPosEnfocar, velocidad){
 
     }
-
-    temblar(){
-
-    }
 }
