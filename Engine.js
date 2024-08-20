@@ -1,9 +1,6 @@
  /** @type {HTMLCanvasElement} */
-import CanvasRender from "./canvasRenderer.js";
-import TecladoControl from "./keyControls.js"
-import mouseControl from "./mouseControls.js"
 
-class Utilities{
+export class Utilities{
 
     static variableCopy(obj){
         return Object.assign(Object.create(Object.getPrototypeOf(obj)), obj);
@@ -149,7 +146,7 @@ class Utilities{
     }
 
 }
-class Vector2D {
+export class Vector2D {
     x;
     y;
 
@@ -267,7 +264,7 @@ class Vector2D {
     };
 
 }
-class Vertices2D{
+export class Vertices2D{
 
     _points = [];// lista de objetos {x: number, y: number}
     _centre = null; //centro relativo a los vertices --> usado para posicionar los vertices a otro centro no relativo
@@ -510,7 +507,7 @@ class Collider2D {
 
 }
 
-class CircleCollider2D extends Collider2D{
+export class CircleCollider2D extends Collider2D{
     
     #radius = 0;
     #NAME = "CircleCollider2D";
@@ -556,7 +553,7 @@ class CircleCollider2D extends Collider2D{
 
 }
 
-class PoligonCollider2D extends Collider2D{
+export class PoligonCollider2D extends Collider2D{
 
     _vertices;
     _radio;
@@ -674,7 +671,7 @@ class PoligonCollider2D extends Collider2D{
 
 }
 
-class RectangleCollider2D extends PoligonCollider2D{
+export class RectangleCollider2D extends PoligonCollider2D{
     
     //centre : Vector2D
     constructor(position = new Vector2D(0,0) , width = 4, height = 4){
@@ -690,7 +687,7 @@ class RectangleCollider2D extends PoligonCollider2D{
 
 }
 
-class AABBCollider2D extends RectangleCollider2D{
+export class AABBCollider2D extends RectangleCollider2D{
 
     //Este collider no puede ser rotado
     #NAME = "AABBCollider2D"
@@ -706,7 +703,7 @@ class AABBCollider2D extends RectangleCollider2D{
     rotate(){}
 }
 
-class Segment2D{
+export class Segment2D{
 
     point1;
     point2;
@@ -729,7 +726,7 @@ class Segment2D{
     }
 }
 
-class CollisionFilter {
+export class CollisionFilter {
 
     //Para el uso de camara => todo los componentes deben tener un rigidbody con AABB, de lo contrario no se pintara.
     // Camara group 999 y category = 1 reservado para la camara y todo los componentes por defecto tendran la masck = 1 para colisionar con la camara y determinar si se encuentra dentro
@@ -802,7 +799,7 @@ class CollisionFilter {
 
 }
 
-class RigidBody2D{
+export class RigidBody2D{
 
     _collisionFilter;
     _collider2D;
@@ -859,7 +856,7 @@ class RigidBody2D{
 
 }
 
-class Tranform {
+export class Tranform {
 
     _position; // Posicion en la scena
     _scale; // escala a aumentar de sprite y rigidbody
@@ -889,7 +886,7 @@ class Tranform {
     }
 
     scale(){
-        return Utilities.variableCopy(this._scale);
+        return this._scale;
     }
 
     setScale(scale){
@@ -1002,7 +999,7 @@ class Tranform {
   
 }
 
-class Resources {
+export class Resources {
     //Patron: peso mosca
 
     #images;
@@ -1160,7 +1157,7 @@ class Resources {
 
 }
 
-class Sprite{
+export class Sprite{
 
     _image;
     #nroFrame; // total de frame de sprite
@@ -1310,7 +1307,7 @@ class Sprite{
 
 }
 
-class AnimationSprite{
+export class AnimationSprite{
     
     #NAME = "AnimationSprite";
 
@@ -1318,8 +1315,8 @@ class AnimationSprite{
     #starFrame;
     #endFrame;
 
-    #scale;
-    #offset
+    _scale;
+    _offset
 
     constructor(startFrame, endFrame, tagName, xyScale, xyOffset = new Vector2D(0,0)){
 
@@ -1363,22 +1360,22 @@ class AnimationSprite{
     }
 
     offset(){
-        return Utilities.variableCopy(new Vector2D(),this.#offset);
+        return Utilities.variableCopy(new Vector2D(),this._offset);
     }
 
     setOffset(xyOffset){
         if(Utilities.controlUseVector2DType(xyOffset)){
-            this.#offset = xyOffset;
+            this._offset = xyOffset;
         }
     }
 
     scale(){
-        return Utilities.variableCopy(this.#scale);
+        return Utilities.variableCopy(this._scale);
     }
 
     setScale(xyScale){
         if(Utilities.controlUseVector2DType(xyScale)){
-            this.#scale = xyScale;
+            this._scale = xyScale;
         }
     }
 
@@ -1388,7 +1385,7 @@ class AnimationSprite{
 
 }
 
-class Component{
+export class Component{
 
     _life;  //TODO: destroy (Tener en cuenta el patron pool de objetos para mayor rendimiento cuando la agregacion y eliminacion es frecuente)
     _render;
@@ -1555,6 +1552,15 @@ class Component{
         this._transform.setPosition(new Vector2D(this._transform.position().x + desplacemnt.x, this._transform.position().y + desplacemnt.y) );
     }
 
+    setPosition(){
+        if(this._rigidBody){
+            let collider2D = this._rigidBody.collider2D();
+            collider2D.traslate(desplacemnt)
+        }
+        
+        this._transform.setPosition(new Vector2D(this._transform.position().x + desplacemnt.x, this._transform.position().y + desplacemnt.y) );
+    }
+
     AABB(){
        /*if(this.#rigidBody.collider2D() && this.#rigidBody.collider2D().bounds()){
             return this.#rigidBody.collider2D().bounds();
@@ -1579,7 +1585,7 @@ class Component{
 
 }
 
-class Composite {
+export class Composite {
 
     _childrens = [];
     _life;
@@ -1662,6 +1668,7 @@ class Composite {
         this._childrens.forEach(child => {
             
             if (child.update) {  child.update(dt, t);  }
+            if (child.updateFrame) {  child.updateFrame(dt, t);  }
             
         });
 
@@ -1766,7 +1773,7 @@ class Composite {
 
 }
 
-class SysCollision2D{
+export class SysCollision2D{
 
     _collision2D = [];
     _notifyCollision;
@@ -2048,6 +2055,79 @@ class SysCollision2D{
 
 }
 
+export class Render {
+
+    static _context;
+    static _view;
+    static _width;
+    static _height;
+
+    static create(width, height){
+
+        let container = document.getElementById("canvas-container") ;
+        const canvas = document.createElement("canvas");
+        container.appendChild(canvas);
+
+        this._width = canvas.width = width;
+        this._height = canvas.height = height;
+
+        this._view = canvas;
+        this._context = canvas.getContext("2d");
+
+    }
+
+    static view(){
+        return this._view;
+    }
+
+    //La camara pasara un composite con elementos con los que colisiono
+    static draw(composite, clear=true) {
+        if(clear){
+            this._context.clearRect(0, 0, this._width , this._height);
+        }
+        composite.childrens().forEach((element, indice) => {
+            
+            this._context.save();
+            
+            if(element.NAME() === "Composite"){
+                Render.render(element);
+
+            }else if(element.NAME() === "Component"){
+
+                if(element.render()){
+
+                    this._context.translate(element.transform().position().x + element.transform().scale().x/2, element.transform().position().y + element.transform().scale().y/2);
+                    this._context.rotate(element.transform().angle() * Math.PI / 180); // Convertir grados a radianes
+                    this._context.translate(-element.transform().position().x - element.transform().scale().x/2, -element.transform().position().y - element.transform().scale().y/2);
+                    
+                    element.drawPre(this._context);
+                    
+                    if(element.sprite()){
+                        this._context.drawImage(element.sprite().image(),
+                                      element.sprite().offset().x,
+                                      element.sprite().offset().y, 
+                                      element.sprite().scale().x,
+                                      element.sprite().scale().y,
+                                      element.transform().position().x,
+                                      element.transform().position().y,
+                                      element.transform().scale().x,
+                                      element.transform().scale().y,
+                                );
+                    }
+
+                    element.drawPost(this._context);
+                }
+            }
+
+            this._context.restore();
+            
+        });
+
+    }
+
+}
+
+// TODO: pendiente
 class Scene extends Composite{
     #otherScenes = [];
     #NAME = "Scene";
@@ -2106,9 +2186,7 @@ class Scene extends Composite{
 
 }
 
-
-
-class Draw{
+export class Draw{
 
     static color;
     puntos = [];
@@ -2124,6 +2202,10 @@ class Draw{
 
     // ------ funciones de dibujo (Opcional uso) -------
     
+    static drawCollider2D(ctx , collider){
+
+    }
+
     static drawCirculo(ctx, pos, radio = 0){
 
             if(Utilities.controlUseVector2DType(pos) && Utilities.controlUseNumberType(radio)){
@@ -2151,96 +2233,136 @@ class Draw{
 
 }
 
-class Animation{}
+export class Event{
+    _observers = [];
 
+    subscribe(func){
+        if(typeof func === 'function'){
+            _observers.add(func);
+        }
+    }
 
-class Sonido{
+    unsubscribe(func){
+        this._observers = this._observers.filter(observer => observer !== func);
+    }
 
-    audio;
-    #NAME = "Sonido";
-
-    constructor(urlAudio, volumen = 1, repetir = false){
-
-        this.audio = new Audio(urlAudio);
-        this.audio.loop = repetir;
-        this.audio.volume = volumen; // 0 a 1
-
-        this.audio.addEventListener("abort",()=>{ console.log("La carga del recurso de audio se ha detenido, pero no por un error"); });
-        this.audio.addEventListener("error",()=>{ console.log("La carga del recurso de audio multimedia se ha detenido, resultado de un error"); });
-        this.audio.addEventListener("suspend",()=>{ console.log("La carga del recurso de audio multimedia se a suspendidio intencionalmente"); });
-        
-        this.audio.addEventListener("waiting",()=>{ 
-            console.log("Reproducción detenido por ausencia (temporal) de datos"); 
-            console.log("Estado de en red: ");
-            
-            switch(this.audio.networkState){
-                case 0: console.log("No hay datos aún");break;
-                case 1: console.log("No está descargando información");break;
-                case 2: console.log("Está descargando información");break;
-                case 3: console.log("No se encontró fuente .src");break;
-                default : break;
-            }
-
-            /*.preload   ---> string	
-            auto: (valor por defecto)
-            metadata: sólo deben precargarse los metadatos
-            none: no debe precargarse nada.
-
-            ---------------------------------------------
-            .readyState  --> numero	
-            HAVE_NOTHING (0) - Sin información
-            HAVE_METADATA (1) - Hay metadatos, sólo de búsqueda.
-            HAVE_CURRENT_DATA (2) - Datos suficientes para punto actual.
-            HAVE_FUTURE_DATA (3) - Datos suficientes para saltos cercanos.
-            HAVE_ENOUGH_DATA (4) - Datos suficientes para saltos sin cortes
-
-           */
+    notify(args){
+        this._observers.forEach(observer =>{
+            observer(args);
         });
-
-        this.audio.addEventListener("stalled",()=>{ console.log("El navegador intenta obtener datos de un recurso de audio pero no los recibe"); });
-
-    }
-
-    getUrl(){
-        return this.audio.src;
-    }
-
-    getTiempoDuracion(){
-        return this.audio.duration;
-    }
-
-    getTiempoReproduccionActual(){
-        return this.audio.currentTime;
-    }
-
-    pausar(){
-        //Pausa el sonido, con la posibilidad de reanudarlo
-        this.audio.paused();
-    }
-
-    muteo(){
-        if(this.audio.muted)
-            this.audio.muted = false;
-        else
-            this.audio.muted = true;
-    }
-
-    reproducir(){
-        //Comienza a reproducir (o reanuda) el audio en cuestión
-        this.audio.play();
-    }
-
-    setVolumen(volumen = 1){
-        this.audio.volume = volumen;
-    }
-    
-    NAME(){
-        return this.#NAME;
     }
 
 }
 
+export class InputTracker {
+    constructor(canvas) {
+        this.canvas = canvas;
+        this.clickIsPressed = false;
+        this.position = new Vector2D(0,0);
+        this.clickStart = null;
+     
+        this.canvas.addEventListener('mousedown', (e) => this.onMouseDown(e));
+        this.canvas.addEventListener('mouseup', (e) => this.onMouseUp(e));
+        this.canvas.addEventListener('mousemove', (e) => this.onMouseMove(e));
 
+        this.canvas.addEventListener('touchstart', (e) => this.onTouchStart(e));
+        this.canvas.addEventListener('touchend', (e) => this.onTouchEnd(e));
+        this.canvas.addEventListener('touchmove', (e) => this.onTouchMove(e));
+
+        this.keysDowns = [];//TODO
+        document.addEventListener('keypress', (event) => { 
+            if(this.keysDowns.includes(event.key)){
+                return;
+            }
+            this.keysDowns.push(event.key); 
+        });
+
+
+        /*this.canvas.addEventListener('keyup', (event) => { 
+            this.keyPressed = false;
+            keysDowns[event.key] = false; });*/
+
+    }
+
+    onMouseDown(event) {
+        this.clickIsPressed = true;
+        this.clickStart = Date.now();
+        this.updatePosition(event.clientX, event.clientY);
+        console.log('Mouse down', this.position);
+    }
+
+    onMouseUp(event) {
+        this.clickIsPressed = false;
+        const clickDuration = Date.now() - this.clickStart;
+        this.updatePosition(event.clientX, event.clientY);
+        console.log('Mouse up', this.position, `Duration: ${clickDuration}ms`);
+    }
+
+    onMouseMove(event) {
+        this.updatePosition(event.clientX, event.clientY);
+        if (this.clickIsPressed) {
+            //console.log('Mouse move while down', this.position);
+        } else {
+            //console.log('Mouse move', this.position);
+        }
+    }
+
+    onTouchStart(event) {
+        this.clickIsPressed = true;
+        this.clickStart = Date.now();
+        const touch = event.touches[0];
+        this.updatePosition(touch.clientX, touch.clientY);
+        console.log('Touch start', this.position);
+    }
+
+    onTouchEnd(event) {
+        this.clickIsPressed = false;
+        const clickDuration = Date.now() - this.clickStart;
+        const touch = event.changedTouches[0];
+        this.updatePosition(touch.clientX, touch.clientY);
+        console.log('Touch end', this.position, `Duration: ${clickDuration}ms`);
+    }
+
+    onTouchMove(event) {
+        const touch = event.touches[0];
+        this.updatePosition(touch.clientX, touch.clientY);
+        if (this.clickIsPressed) {
+            //console.log('Touch move while down', this.position);
+        } else {
+            //console.log('Touch move', this.position);
+        }
+        event.preventDefault(); // Prevenir el scroll durante el touchmove
+    }
+
+    updatePosition(clientX, clientY) {
+        const rect = this.canvas.getBoundingClientRect();
+        this.position.x = clientX - rect.left;
+        this.position.y = clientY - rect.top;
+    }
+
+    getPosition() {
+        return this.position;
+    }
+
+    isInputPressed() {
+        return this.clickIsPressed;
+    }
+
+    _lastTime = 0; 
+    reset(t,speedReset){
+        if( !(this._lastTime + speedReset < t)){return;}
+
+        this.keysDowns = [];
+        this._lastTime = t; 
+        
+    }
+
+}
+
+// TODO: pendiente
+class Animation{}
+
+// TODO: pendiente
 class Camara{
 
     static #posicionEnfocar;
@@ -2278,265 +2400,3 @@ class Camara{
 
     }
 }
-
-
-//Controlador quien interactuara con las BD
-class Controlador {
-
-    constructor() {
-        //....
-    }
-
-
-    buscarEnJSON(arrayDeObejtosJSON, clave) {
-
-        for (let i = 0; i < arrayDeObejtosJSON.length; i++) {
-            if (arrayDeObejtosJSON[i].key == clave)
-                return arrayDeObejtosJSON[i];
-        }
-
-    }
-
-    getBdEnemys(){
-        return this.enemys;
-    }
-
-    // BD enemigos: //Pendie si dispara o no y rotacion de escudos(otros enemigos)
-    // NOTA: Alto y ancho es la dimension independiente de la dimension del sprite
-    enemys = [
-            { "key": 1,tipe:"simple", sprite : {"urlSprite": "null", "nroFrameSprite": -1, "alto": 20, "ancho": 20}, tranform : {"alto": 20, "ancho": 20, "radio": 40,"velocityX": 3, "velocityY": 3, "anguloRotacion": 5}, config: {"life": 100, "color": "random", "keyParticula": 2 ,"damage": 1,"tipeMove":"lineal"} },
-            { "key": 2,tipe:"simple", sprite : {"urlSprite": "null", "nroFrameSprite": -1, "alto": 40, "ancho": 40}, tranform : {"alto": 40, "ancho": 40, "radio": 40, "velocityX": 3, "velocityY": 3, "anguloRotacion": 0}, config :{"life": 200, "color": "random", "keyParticula": 2 ,"damage": 1,"tipeMove":"lineal"} },
-            { "key": 3,tipe:"simple", sprite : {"urlSprite": "./resources/enemyesSprites/Rombo2.png", "nroFrameSprite": 0, "alto": 134, "ancho": 168}, tranform : { "alto": 134, "ancho": 168, "radio": 50, "velocityX": 7, "velocityY": 7, "anguloRotacion": 0.3}, config :{ "life": 35, "color": " ", "keyParticula": 2,"damage": 10,"tipeMove":"lineal"} },
-            { "key": 4,tipe:"simple", sprite : {"urlSprite": "./resources/enemyesSprites/PincheAmarillo.png", "nroFrameSprite": 2, "alto": 194, "ancho": 185}, tranform : {"alto": 194, "ancho": 185, "radio": 50, "velocityX": 5, "velocityY": 5, "anguloRotacion": 0}, config: {"life": 15, "color": " ", "keyParticula": 2 ,"damage": 1,"tipeMove":"circular"} },
-            { "key": 6,tipe:"compuesto", sprite: {"urlSprite": "./resources/enemyesSprites/Rombo2.png", "nroFrameSprite": 0, "alto": 134, "ancho": 168}, tranform : { "alto": 134, "ancho": 168, "radio": 50, "velocityX": 7, "velocityY": 7, "anguloRotacion": 0.3}, config :{ "life": 500, "color": " ", "keyParticula": 2,"damage": 2,"tipeMove":"lineal"}, 
-               childProtection:{life:15, nro:3, radioOfDist:1200, sprite:null, color: 'blue'}},
-            { "key": 5,tipe:"compuesto", sprite: {"urlSprite": "./resources/enemyesSprites/Rombo2.png", "nroFrameSprite": 0, "alto": 134, "ancho": 168}, tranform : { "alto": 134, "ancho": 168, "radio": 50, "velocityX": 7, "velocityY": 7, "anguloRotacion": 0.3}, config :{ "life": 500, "color": " ", "keyParticula": 2,"damage": 10,"tipeMove":"lineal"}, 
-               childProtection:{life:15, nro:4, radioOfDist:1100, sprite : {"urlSprite": "./resources/enemyesSprites/PincheAmarillo.png", "nroFrameSprite": 2, "alto": 194, "ancho": 185}, color: 'null'}}
-        ]
-        //-------------------
-
-    //------------------------------------- BD de Bullets Fire-base ----------------------------------------------------------
-    bulletsConfguraciones = [
-            { "key": "simple", "urlSprite": "./resources/bullet/bulletCaramelo.png", "nroFrameSprite": 1, "altoSprite": 40, "anchoSprite": 40, "scaleAlto": 40, "scaleAncho": 40, "radio": 20, "life": 200, "daño": 1, "color": "null", "velocidadMov": 500, "anguloRotacion": 0, "keyParticle": 1 }
-        ]
-        //-------------------------------------------------------------------------------------------------------------
-
-
-    // Radio en random o nada    
-    particulasConfiguraciones = [
-        { "key": 1, "urlSprite": "./resources/efectExplosion/boom.png", "urlSong": "./resources/efectSong/synthetic_explosion_1.flac", "nroFrameSprite": 1, "altoSprite": 179, "anchoSprite": 200, "alto": 200, "ancho": 179, "radio": 100, "color": "null", "velocidadMov": 0, "anguloRotacion": 0, "nroParticles": 1,"timeLife":40},
-        { "key": 2, "urlSprite": "null","urlSong":" ", "nroFrameSprite": -1, "altoSprite": 20, "anchoSprite": 20, "alto": 20, "ancho": 20, "radio": Math.random()*20, "color": "blue", "velocidadMov": 80, "anguloRotacion": 0,"nroParticles": 15, "timeLife":60}
-    ]
-
-    //cargar de BD equipamiento e abances del player
-    cargarPlayer(){
-        
-    }
-
-
-}
-
-
-
-// --------------------------- Sector Pruebas --------------------------------
-//{ "key": 6,tipe:"compuesto", sprite: {"urlSprite": "./resources/enemyesSprites/Rombo2.png", "nroFrameSprite": 0, "alto": 134, "ancho": 168}, tranform : { "alto": 134, "ancho": 168, "radio": 50, "velocityX": 7, "velocityY": 7, "anguloRotacion": 0.3}, config :{ "life": 500, "color": " ", "keyParticula": 2,"damage": 2,"tipeMove":"lineal"}, 
-
-function testColliders2D(){
-
-    let rectangle = new RectangleCollider2D(new Vector2D(150,150)); 
-
-    let poligono = new PoligonCollider2D(new Vector2D(150,150,0));
-    poligono.createVerticesPoligon(poligono.centerCopy(),5,25);
-
-
-    let verticesPrueba = [
-        {x: 175, y: 175},
-        {x: 175, y:125},
-        {x:125, y:125},
-        {x:125, y:175}
-    ]
-    let poligono2 = new PoligonCollider2D(new Vector2D(150,150,0), verticesPrueba);
-    
-    let circle = new CircleCollider2D(new Vector2D(150,150,0),50);
-    
-    let segmento = new Segment2D(new Vector2D(5,5), new Vector2D(25,15));
-
-    let filterCollision = new CollisionFilter();
-    console.log("--->",poligono.NAME());
-    console.log("Rectangulo: ",rectangle,
-        " Poligono 1: ",poligono ,
-        " Poligono 2: ",poligono2, 
-        " Circle: ",circle,
-        " Segemento: ", segmento,
-        "Collision filter: ", filterCollision
-    );
-
-}
-testColliders2D();
-
-function testResources(){
-    let R = new Resources();
-
-    R.addImage("./resources/enemyesSprites/Rombo2.png", "E");
-    R.addImage("./resources/enemyesSprites/Rombo2.png", "A");
-    R.addAudio("./resources/efectSong/synthetic_explosion_1.flac", "explosion");
-    console.log(R.checkLoadingStatus())
-    console.log(R.image("E"));
-    console.log(R.audio("explosion"));
-    console.log("Audios : ",R.allAudio()," Imagenes: ",R.allImage());
-
-    setTimeout(()=> console.log(R.image("E")), 10000)
-    setTimeout(()=> console.log(R.checkLoadingStatus()) , 10000)
-
-    setTimeout(() => {
-        //R.removeImage("E");
-        console.log(R.allImage());
-        console.log(R.checkLoadingStatus());
-
-        test(R);
-
-    }, 5000)
-
-}
-testResources();
-
-function test(R){
-
-    let ecena = new Composite();
-    let RB = new RigidBody2D(new AABBCollider2D(new Vector2D(80,80), 50, 50), new CollisionFilter());
-    let T1 = new Tranform(new Vector2D(80,80), new Vector2D(50,50));
-    let sprite1 = new Sprite(R.image("E"), new Vector2D(R.image("E").naturalWidth, R.image("E").naturalHeight), new Vector2D(0, 0) );
-    let C1 = new Component(T1, sprite1, RB);
-
-    let RB2 = new RigidBody2D(new AABBCollider2D(new Vector2D(120,120), 50, 50), new CollisionFilter());
-    let T2 = new Tranform(new Vector2D(120,120), new Vector2D(50,50));
-    let sprite2 = new Sprite(R.image("E"), new Vector2D(R.image("E").naturalWidth, R.image("E").naturalHeight), new Vector2D(0, 0) );
-    let C2 = new Component(T2, sprite2, RB2);
-
-
-    let RB3 = new RigidBody2D(new CircleCollider2D(new Vector2D(25,25), 20), new CollisionFilter());
-    let T3 = new Tranform(new Vector2D(0,0), new Vector2D(50,50));
-    let sprite3 = new Sprite(R.image("E"), new Vector2D(R.image("E").naturalWidth, R.image("E").naturalHeight), new Vector2D(0, 0));
-    let C3 = new Component(T3, sprite3, RB3);
-
-
-    C1.drawPost = (ctx)=>{
-        Draw.color = "red";
-        ctx.restore()
-        console.log("centro:", C1.AABB().max_x/2," y:",C1.AABB().max_y/2)
-        Draw.drawRectangulo(ctx, new Vector2D(C1.AABB().min_x, C1.AABB().min_y), new Vector2D(C1.AABB().max_x - C1.AABB().min_x, C1.AABB().max_y - C1.AABB().min_y));
-    }
-
-    C2.drawPre = (ctx)=>{
-        Draw.color = "red";
-        Draw.drawRectangulo(ctx, new Vector2D(C2.AABB().min_x, C2.AABB().min_y), new Vector2D(C2.AABB().max_x - C2.AABB().min_x, C2.AABB().max_y - C2.AABB().min_y));
-    }
-
-    C3.drawPost = (ctx) =>{
-        Draw.color = "red";
-        Draw.drawCirculo(ctx, C3.rigidBody().collider2D().centerCopy(), C3.rigidBody().collider2D().radius());
-    }
-
-    C1.setTag("C1");
-    C2.setTag("C2");
-    C3.setTag("C3");
-
-    C1.rotate(45);
-    C1.traslate(new Vector2D(50,90));
-    C1.scale(new Vector2D(5,5));
-    
-    C3.traslate(new Vector2D(80,90));
-
-    C1.onCollision = (collision) => {
-        console.log("Soy C1, estoy colisionando:", collision);
-    }
-
-    C2.onCollision = (collision) => {
-        console.log("Soy C2, estoy colisionando:", collision);
-    }
-
-    ecena.add(C1);
-    ecena.add(C2);
-    ecena.add(C3);
-
-    ecena.traslate(new Vector2D(20,60));
-    ecena.rotate(45);
-    ecena.scale(new Vector2D(1.5,1.5));
-
-    let sysC = new SysCollision2D().detecteCollision(ecena);
-    CanvasRender.create(800, 800);
-    CanvasRender.render(ecena);
-
-   
-}
-
-
-
-function draw(){
-    let Canvas = new CanvasRender();
-    console.log(Canvas);
-    
-    //canvas.width = 500;
-    //canvas.height = 500;
-    let context = Canvas.contexto;
-
-    context.strokeStyle = 'blue'; // set the strokeStyle color to 'navy' (for the stroke() call below)
-    context.lineWidth = 1;      // set the line width to 3 pixels
-    context.beginPath();          // start a new path
-    context.moveTo (pol1.verticesRef()[0].x,pol1.verticesRef()[0].y);      // set (150,20) to be the starting point
-    for(let i = 1; i<pol1.verticesRef().length; i++){
-            context.lineTo(pol1.verticesRef()[i].x,pol1.verticesRef()[i].y);
-    }      
-    context.lineTo(pol1.verticesRef()[0].x,pol1.verticesRef()[0].y);
-    context.stroke(); 
-
-    
-    console.log("dasd ",pol1.centerCopy());
-    console.log(pol1.verticesCopy());
-    pol1.scale(2,2,{x:150,y:150});
-    pol1.rotate({x:150,y:150}, 135);
-    pol1.traslate({x:2,y:1});
-    console.log(pol1.area(true));
-    context.beginPath();          // start a new path
-    context.moveTo (pol1.verticesRef()[0].x,pol1.verticesRef()[0].y);      // set (150,20) to be the starting point
-    for(let i = 1; i<pol1.verticesRef().length; i++){
-            context.lineTo(pol1.verticesRef()[i].x,pol1.verticesRef()[i].y);
-    }      
-    context.lineTo(pol1.verticesRef()[0].x,pol1.verticesRef()[0].y);
-    context.stroke(); 
-
-
-    context.beginPath();
-    console.log(pol1.boundsCopy().max_x);
-    context.moveTo(pol1.boundsCopy().max_x,pol1.boundsCopy().max_y);
-    context.lineTo(pol1.boundsCopy().max_x,pol1.boundsCopy().min_y);      // set (150,20) to be the starting point
-    context.lineTo(pol1.boundsCopy().min_x,pol1.boundsCopy().min_y);
-    context.lineTo(pol1.boundsCopy().min_x,pol1.boundsCopy().max_y);
-    context.lineTo(pol1.boundsCopy().max_x, pol1.boundsCopy().max_y);
-    context.stroke();
-   
-
-
-
-}
-
-
-/*
-function loopy(ms) {
-
-    requestAnimationFrame(loopy);
-
-    const t = ms / 1000;
-    dt = t - last;
-    last = t;
-
-    //----Sentencias---
-
-    scena.update(dt,t);
-    //-------
-
-    render.render(Ecenario.contenedorObjetos);
-}
-
-requestAnimationFrame(loopy);
-*/
