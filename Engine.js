@@ -601,6 +601,7 @@ export class PoligonCollider2D extends Collider2D{
           vertices.push({ x, y }); 
         }
         this._vertices = new Vertices2D(vertices);
+        this._bound = this.AABB(vertices); // Actualizar bounds
         return vertices;
     }
 
@@ -658,6 +659,7 @@ export class PoligonCollider2D extends Collider2D{
 
     rotate(angle, center){
         this._vertices.rotate(center, angle);
+        this._bound = this.AABB(this._vertices.pointsRef()); // Actualizar bounds después de rotar
     }
 
     traslate(vector2D){
@@ -1917,19 +1919,52 @@ export class SysCollision2D{
     }
 
     verifyCollision(collider2D1, collider2D2){
-       
-        if(collider2D1.NAME() === "AABBCollider2D" && collider2D2.NAME() === "AABBCollider2D"){
-            return true;
-        }else if(collider2D1.NAME() === "CircleCollider2D" && collider2D2.NAME() === "AABBCollider2D"){
+        const name1 = collider2D1.NAME();
+        const name2 = collider2D2.NAME();
+        
+        // AABB vs AABB
+        if(name1 === "AABBCollider2D" && name2 === "AABBCollider2D"){
+            return true; // Ya verificado en checkCollisionAABB
+        }
+        
+        // Circle vs AABB
+        if(name1 === "CircleCollider2D" && name2 === "AABBCollider2D"){
             return this.checkCollisionBetweenAabbAndCircle(collider2D2, collider2D1);
-        }else if(collider2D1.NAME() === "AABBCollider2D" && collider2D2.NAME() === "CircleCollider2D"){
+        }
+        if(name1 === "AABBCollider2D" && name2 === "CircleCollider2D"){
             return this.checkCollisionBetweenAabbAndCircle(collider2D1, collider2D2);
-        }else if(collider2D1.NAME() === "CircleCollider2D" && collider2D2.NAME() === "CircleCollider2D"){
+        }
+        
+        // Circle vs Circle
+        if(name1 === "CircleCollider2D" && name2 === "CircleCollider2D"){
             return this.checkCollisionBetweenCircles(collider2D1, collider2D2);
-        }//Pendiente interseccion entre poligonos
+        }
+        
+        // Polygon vs Polygon (incluyendo RectangleCollider2D y PoligonCollider2D)
+        const isPolygon1 = name1 === "PoligonCollider2D" || name1 === "RectangleCollider2D";
+        const isPolygon2 = name2 === "PoligonCollider2D" || name2 === "RectangleCollider2D";
+        
+        if(isPolygon1 && isPolygon2){
+            return this.doPolygonsIntersect(collider2D1.verticesRef(), collider2D2.verticesRef());
+        }
+        
+        // Polygon vs Circle
+        if(isPolygon1 && name2 === "CircleCollider2D"){
+            return this.checkCollisionBetweenPolygonAndCircle(collider2D1, collider2D2);
+        }
+        if(name1 === "CircleCollider2D" && isPolygon2){
+            return this.checkCollisionBetweenPolygonAndCircle(collider2D2, collider2D1);
+        }
+        
+        // Polygon vs AABB - Tratamos AABB como polígono para precisión
+        if(isPolygon1 && name2 === "AABBCollider2D"){
+            return this.doPolygonsIntersect(collider2D1.verticesRef(), collider2D2.verticesRef());
+        }
+        if(name1 === "AABBCollider2D" && isPolygon2){
+            return this.doPolygonsIntersect(collider2D1.verticesRef(), collider2D2.verticesRef());
+        }
 
         return false;
-
     }
 
     checkCollisionAABB(bound1, bound2){
@@ -1987,70 +2022,226 @@ export class SysCollision2D{
         }
     }
 
-    //------------------ EN DESARROLLO ---------------------
-    //https://www.codeproject.com/Articles/15573/2D-Polygon-Collision-Detection
-    //collisionBetweenPolygons(Poligon2D,Poligon2D) : { pointsIntersection:Point[], collisioned:boolean }
-    doPolygonsIntersect (a, b) {
-        var polygons = [a, b];
-        var minA, maxA, projected, i, i1, j, minB, maxB;
+    //------------------ DETECCIÓN DE COLISIONES PARA POLÍGONOS ---------------------
+    // Separating Axis Theorem (SAT) - Teorema del Eje Separador
+    // https://www.codeproject.com/Articles/15573/2D-Polygon-Collision-Detection
     
-        for (i = 0; i < polygons.length; i++) {
+    /**
+     * Verifica si dos polígonos convexos están colisionando usando SAT
+     * @param {Array} verticesA - Vértices del polígono A [{x, y}, ...]
+     * @param {Array} verticesB - Vértices del polígono B [{x, y}, ...]
+     * @returns {boolean} - true si hay colisión, false si no
+     */
+    doPolygonsIntersect(verticesA, verticesB) {
+        const polygons = [verticesA, verticesB];
+        
+        for (let i = 0; i < polygons.length; i++) {
+            const polygon = polygons[i];
+            
+            for (let i1 = 0; i1 < polygon.length; i1++) {
+                // Obtener dos vértices consecutivos para crear un borde
+                const i2 = (i1 + 1) % polygon.length;
+                const p1 = polygon[i1];
+                const p2 = polygon[i2];
     
-            // for each polygon, look at each edge of the polygon, and determine if it separates
-            // the two shapes
-            var polygon = polygons[i];
-            for (i1 = 0; i1 < polygon.length; i1++) {
+                // Calcular el vector normal perpendicular al borde
+                const normal = { x: p2.y - p1.y, y: p1.x - p2.x };
     
-                // grab 2 vertices to create an edge
-                var i2 = (i1 + 1) % polygon.length;
-                var p1 = polygon[i1];
-                var p2 = polygon[i2];
-    
-                // find the line perpendicular to this edge
-                var normal = { x: p2.y - p1.y, y: p1.x - p2.x };
-    
-                minA = maxA = undefined;
-                // for each vertex in the first shape, project it onto the line perpendicular to the edge
-                // and keep track of the min and max of these values
-                for (j = 0; j < a.length; j++) {
-                    projected = normal.x * a[j].x + normal.y * a[j].y;
-                    if (isUndefined(minA) || projected < minA) {
-                        minA = projected;
-                    }
-                    if (isUndefined(maxA) || projected > maxA) {
-                        maxA = projected;
-                    }
+                // Proyectar todos los vértices del polígono A sobre el eje normal
+                let minA = Infinity, maxA = -Infinity;
+                for (let j = 0; j < verticesA.length; j++) {
+                    const projected = normal.x * verticesA[j].x + normal.y * verticesA[j].y;
+                    if (projected < minA) minA = projected;
+                    if (projected > maxA) maxA = projected;
                 }
     
-                // for each vertex in the second shape, project it onto the line perpendicular to the edge
-                // and keep track of the min and max of these values
-                minB = maxB = undefined;
-                for (j = 0; j < b.length; j++) {
-                    projected = normal.x * b[j].x + normal.y * b[j].y;
-                    if (isUndefined(minB) || projected < minB) {
-                        minB = projected;
-                    }
-                    if (isUndefined(maxB) || projected > maxB) {
-                        maxB = projected;
-                    }
+                // Proyectar todos los vértices del polígono B sobre el eje normal
+                let minB = Infinity, maxB = -Infinity;
+                for (let j = 0; j < verticesB.length; j++) {
+                    const projected = normal.x * verticesB[j].x + normal.y * verticesB[j].y;
+                    if (projected < minB) minB = projected;
+                    if (projected > maxB) maxB = projected;
                 }
     
-                // if there is no overlap between the projects, the edge we are looking at separates the two
-                // polygons, and we know there is no overlap
+                // Si no hay superposición en las proyecciones, no hay colisión
                 if (maxA < minB || maxB < minA) {
-                    //CONSOLE("polygons don't intersect!");
                     return false;
                 }
             }
         }
         return true;
-    };
-
-    collisionBetweenPolygonAndCircle(){
-
     }
-    // : pointsIntersection
-    intersectBetweenSegments(){}
+
+    /**
+     * Verifica colisión entre un polígono convexo y un círculo
+     * @param {PoligonCollider2D} polygon - Collider del polígono
+     * @param {CircleCollider2D} circle - Collider del círculo
+     * @returns {boolean} - true si hay colisión
+     */
+    checkCollisionBetweenPolygonAndCircle(polygon, circle) {
+        const vertices = polygon.verticesRef();
+        const center = circle.centerCopy();
+        const radius = circle.radius();
+        
+        // 1. Verificar si el centro del círculo está dentro del polígono
+        if (this.isPointInsidePolygon(center, vertices)) {
+            return true;
+        }
+        
+        // 2. Verificar la distancia de cada borde del polígono al centro del círculo
+        for (let i = 0; i < vertices.length; i++) {
+            const j = (i + 1) % vertices.length;
+            const edgeStart = vertices[i];
+            const edgeEnd = vertices[j];
+            
+            // Encontrar el punto más cercano en el borde al centro del círculo
+            const closestPoint = this.closestPointOnSegment(center, edgeStart, edgeEnd);
+            
+            // Calcular la distancia entre el punto más cercano y el centro del círculo
+            const dx = center.x - closestPoint.x;
+            const dy = center.y - closestPoint.y;
+            const distanceSquared = dx * dx + dy * dy;
+            
+            if (distanceSquared <= radius * radius) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+
+    /**
+     * Verifica si un punto está dentro de un polígono (Ray Casting Algorithm)
+     * @param {Object} point - Punto {x, y}
+     * @param {Array} vertices - Vértices del polígono [{x, y}, ...]
+     * @returns {boolean}
+     */
+    isPointInsidePolygon(point, vertices) {
+        let inside = false;
+        const n = vertices.length;
+        
+        for (let i = 0, j = n - 1; i < n; j = i++) {
+            const xi = vertices[i].x, yi = vertices[i].y;
+            const xj = vertices[j].x, yj = vertices[j].y;
+            
+            if (((yi > point.y) !== (yj > point.y)) &&
+                (point.x < (xj - xi) * (point.y - yi) / (yj - yi) + xi)) {
+                inside = !inside;
+            }
+        }
+        
+        return inside;
+    }
+
+    /**
+     * Encuentra el punto más cercano en un segmento a un punto dado
+     * @param {Object} point - Punto {x, y}
+     * @param {Object} segStart - Inicio del segmento {x, y}
+     * @param {Object} segEnd - Fin del segmento {x, y}
+     * @returns {Object} - Punto más cercano {x, y}
+     */
+    closestPointOnSegment(point, segStart, segEnd) {
+        const dx = segEnd.x - segStart.x;
+        const dy = segEnd.y - segStart.y;
+        const lengthSquared = dx * dx + dy * dy;
+        
+        if (lengthSquared === 0) {
+            return { x: segStart.x, y: segStart.y };
+        }
+        
+        // Proyección del punto sobre la línea del segmento
+        let t = ((point.x - segStart.x) * dx + (point.y - segStart.y) * dy) / lengthSquared;
+        t = Math.max(0, Math.min(1, t)); // Limitar t al rango [0, 1]
+        
+        return {
+            x: segStart.x + t * dx,
+            y: segStart.y + t * dy
+        };
+    }
+
+    /**
+     * Verifica si dos segmentos de línea se intersectan
+     * @param {Object} p1 - Punto inicial del segmento 1 {x, y}
+     * @param {Object} p2 - Punto final del segmento 1 {x, y}
+     * @param {Object} p3 - Punto inicial del segmento 2 {x, y}
+     * @param {Object} p4 - Punto final del segmento 2 {x, y}
+     * @returns {Object|null} - Punto de intersección {x, y} o null si no hay intersección
+     */
+    intersectBetweenSegments(p1, p2, p3, p4) {
+        const d1x = p2.x - p1.x;
+        const d1y = p2.y - p1.y;
+        const d2x = p4.x - p3.x;
+        const d2y = p4.y - p3.y;
+        
+        const cross = d1x * d2y - d1y * d2x;
+        
+        // Los segmentos son paralelos
+        if (Math.abs(cross) < 1e-10) {
+            return null;
+        }
+        
+        const dx = p3.x - p1.x;
+        const dy = p3.y - p1.y;
+        
+        const t = (dx * d2y - dy * d2x) / cross;
+        const u = (dx * d1y - dy * d1x) / cross;
+        
+        // Verificar si la intersección está dentro de ambos segmentos
+        if (t >= 0 && t <= 1 && u >= 0 && u <= 1) {
+            return {
+                x: p1.x + t * d1x,
+                y: p1.y + t * d1y
+            };
+        }
+        
+        return null;
+    }
+
+    /**
+     * Obtiene todos los puntos de intersección entre dos polígonos
+     * @param {Array} verticesA - Vértices del polígono A
+     * @param {Array} verticesB - Vértices del polígono B
+     * @returns {Array} - Array de puntos de intersección
+     */
+    getPolygonIntersectionPoints(verticesA, verticesB) {
+        const intersectionPoints = [];
+        
+        for (let i = 0; i < verticesA.length; i++) {
+            const a1 = verticesA[i];
+            const a2 = verticesA[(i + 1) % verticesA.length];
+            
+            for (let j = 0; j < verticesB.length; j++) {
+                const b1 = verticesB[j];
+                const b2 = verticesB[(j + 1) % verticesB.length];
+                
+                const intersection = this.intersectBetweenSegments(a1, a2, b1, b2);
+                if (intersection) {
+                    intersectionPoints.push(intersection);
+                }
+            }
+        }
+        
+        return intersectionPoints;
+    }
+
+    /**
+     * Verifica colisión detallada entre dos polígonos y retorna información
+     * @param {PoligonCollider2D} polygon1 
+     * @param {PoligonCollider2D} polygon2 
+     * @returns {Object} - {collided: boolean, intersectionPoints: Array}
+     */
+    checkDetailedPolygonCollision(polygon1, polygon2) {
+        const verticesA = polygon1.verticesRef();
+        const verticesB = polygon2.verticesRef();
+        
+        const collided = this.doPolygonsIntersect(verticesA, verticesB);
+        const intersectionPoints = collided ? this.getPolygonIntersectionPoints(verticesA, verticesB) : [];
+        
+        return {
+            collided,
+            intersectionPoints
+        };
+    }
 
     //-----------------------------------------------
 
@@ -2062,12 +2253,19 @@ export class Render {
     static _view;
     static _width;
     static _height;
+    static _camera;
 
-    static create(width, height){
+    static create(width, height, fitToWindow = false){
 
-        let container = document.getElementById("canvas-container") ;
+        let container = document.getElementById("canvas-container");
         const canvas = document.createElement("canvas");
-        container.appendChild(canvas);
+        
+        // Si no existe el contenedor, agregar el canvas directamente al body
+        if (container) {
+            container.appendChild(canvas);
+        } else {
+            document.body.appendChild(canvas);
+        }
 
         this._width = canvas.width = width;
         this._height = canvas.height = height;
@@ -2075,10 +2273,82 @@ export class Render {
         this._view = canvas;
         this._context = canvas.getContext("2d");
 
+        // Ajustar al tamaño de la ventana si se solicita
+        if (fitToWindow) {
+            this.fitToWindow();
+            window.addEventListener('resize', () => this.fitToWindow());
+        }
+    }
+
+    // Ajustar el canvas para que se vea bien en la ventana manteniendo aspect ratio
+    static fitToWindow() {
+        const canvas = this._view;
+        if (!canvas) return;
+
+        const windowWidth = window.innerWidth;
+        const windowHeight = window.innerHeight;
+        const canvasRatio = this._width / this._height;
+        const windowRatio = windowWidth / windowHeight;
+
+        let newWidth, newHeight;
+
+        if (windowRatio > canvasRatio) {
+            // Ventana más ancha que el canvas
+            newHeight = windowHeight * 0.95;
+            newWidth = newHeight * canvasRatio;
+        } else {
+            // Ventana más alta que el canvas
+            newWidth = windowWidth * 0.95;
+            newHeight = newWidth / canvasRatio;
+        }
+
+        canvas.style.width = newWidth + 'px';
+        canvas.style.height = newHeight + 'px';
+        canvas.style.display = 'block';
+        canvas.style.margin = 'auto';
+        canvas.style.position = 'absolute';
+        canvas.style.top = '50%';
+        canvas.style.left = '50%';
+        canvas.style.transform = 'translate(-50%, -50%)';
+    }
+
+    // Ajustar el canvas para llenar completamente la ventana (puede cortar)
+    static fillWindow() {
+        const canvas = this._view;
+        if (!canvas) return;
+
+        canvas.style.width = '100vw';
+        canvas.style.height = '100vh';
+        canvas.style.objectFit = 'cover';
+    }
+
+    // Establecer una cámara
+    static setCamera(camera) {
+        this._camera = camera;
+    }
+
+    static getCamera() {
+        return this._camera;
+    }
+
+    static clearCamera() {
+        this._camera = null;
     }
 
     static view(){
         return this._view;
+    }
+
+    static get contexto() {
+        return this._context;
+    }
+
+    static get width() {
+        return this._width;
+    }
+
+    static get height() {
+        return this._height;
     }
 
     //La camara pasara un composite con elementos con los que colisiono
@@ -2086,14 +2356,44 @@ export class Render {
         if(clear){
             this._context.clearRect(0, 0, this._width , this._height);
         }
+
+        // Aplicar transformación de la cámara si existe
+        if (this._camera) {
+            this._context.save();
+            this._camera.applyTransform(this._context);
+        }
+
+        this._drawComposite(composite);
+
+        // Restaurar transformación de la cámara
+        if (this._camera) {
+            this._context.restore();
+        }
+    }
+
+    // Método interno para dibujar un composite (recursivo)
+    static _drawComposite(composite) {
         composite.childrens().forEach((element, indice) => {
             
             this._context.save();
             
             if(element.NAME() === "Composite"){
-                Render.render(element);
+                this._drawComposite(element);
 
             }else if(element.NAME() === "Component"){
+
+                // Verificar si el elemento está visible en la cámara (culling)
+                if (this._camera && element.AABB) {
+                    try {
+                        const aabb = element.AABB();
+                        if (aabb && !this._camera.isVisible(aabb)) {
+                            this._context.restore();
+                            return; // No dibujar si está fuera de la cámara
+                        }
+                    } catch(e) {
+                        // Si no se puede obtener AABB, dibujar de todos modos
+                    }
+                }
 
                 if(element.render()){
 
@@ -2123,7 +2423,14 @@ export class Render {
             this._context.restore();
             
         });
+    }
 
+    // Dibujar en coordenadas de pantalla (ignora la cámara) - útil para UI
+    static drawUI(callback) {
+        if (this._camera) {
+            this._camera.resetTransform(this._context);
+        }
+        callback(this._context);
     }
 
 }
@@ -2270,18 +2577,23 @@ export class InputTracker {
         this.canvas.addEventListener('touchend', (e) => this.onTouchEnd(e));
         this.canvas.addEventListener('touchmove', (e) => this.onTouchMove(e));
 
-        this.keysDowns = [];//TODO
-        document.addEventListener('keypress', (event) => { 
+        this.keysDowns = [];
+        
+        // Usar keydown para detectar cuando se presiona una tecla
+        document.addEventListener('keydown', (event) => { 
             if(this.keysDowns.includes(event.key)){
                 return;
             }
             this.keysDowns.push(event.key); 
         });
 
-
-        /*this.canvas.addEventListener('keyup', (event) => { 
-            this.keyPressed = false;
-            keysDowns[event.key] = false; });*/
+        // Usar keyup para detectar cuando se suelta una tecla
+        document.addEventListener('keyup', (event) => { 
+            const index = this.keysDowns.indexOf(event.key);
+            if (index > -1) {
+                this.keysDowns.splice(index, 1);
+            }
+        });
 
     }
 
@@ -2350,12 +2662,11 @@ export class InputTracker {
     }
 
     _lastTime = 0; 
-    reset(t,speedReset){
+    reset(t, speedReset){
+        // Ya no es necesario resetear keysDowns porque ahora se maneja con keyup
+        // Este método se mantiene por compatibilidad pero ya no borra las teclas
         if( !(this._lastTime + speedReset < t)){return;}
-
-        this.keysDowns = [];
         this._lastTime = t; 
-        
     }
 
 }
@@ -2363,37 +2674,222 @@ export class InputTracker {
 // TODO: pendiente
 class Animation{}
 
-// TODO: pendiente
-class Camara{
-
-    static #posicionEnfocar;
-    static #altoAnchoVisualizacion;// alto ancho Cavnas
+// Cámara 2D completa
+export class Camera {
     
-   static getAltoAnchoVisualizacion(){
-        // pasar por valor no por referencia
-        return new Vector(this.#altoAnchoVisualizacion.X, this.#altoAnchoVisualizacion.Y, this.#altoAnchoVisualizacion.Z);
+    // Posición de la cámara en el mundo
+    _position;
+    // Dimensiones del viewport (lo que se ve)
+    _viewportWidth;
+    _viewportHeight;
+    // Zoom (1 = normal, >1 = acercado, <1 = alejado)
+    _zoom;
+    // Objetivo a seguir (Component o Composite)
+    _target;
+    // Suavizado del seguimiento (0 = instantáneo, 1 = muy suave)
+    _smoothing;
+    // Límites del mundo (para que la cámara no salga)
+    _worldBounds;
+    // Rotación de la cámara
+    _rotation;
+
+    #NAME = "Camera";
+
+    constructor(viewportWidth, viewportHeight) {
+        this._position = new Vector2D(0, 0);
+        this._viewportWidth = viewportWidth;
+        this._viewportHeight = viewportHeight;
+        this._zoom = 1;
+        this._target = null;
+        this._smoothing = 0.1;
+        this._worldBounds = null;
+        this._rotation = 0;
     }
 
-    static setPosicionEnfoque(vector){
-        if(vector.NAME && vector.NAME() == "Vector")
-            this.#posicionEnfocar = vector;
+    NAME() {
+        return this.#NAME;
     }
 
-    static getPosicionEnfoque(){
-        // pasar por valor no por referencia
-        return new Vector(this.#posicionEnfocar.X,this.#posicionEnfocar.Y,this.#posicionEnfocar.Z);
+    // Getters y Setters
+    position() {
+        return new Vector2D(this._position.x, this._position.y);
     }
 
-    static setAltoAnchoVisualizacion(vector){
-        if(vector.NAME && vector.NAME() == "Vector")
-            this.#altoAnchoVisualizacion = vector;
+    setPosition(x, y) {
+        if (typeof x === 'object') {
+            this._position.x = x.x;
+            this._position.y = x.y;
+        } else {
+            this._position.x = x;
+            this._position.y = y;
+        }
+        this._clampToBounds();
     }
 
-    static updateCam(ctx){
-        
+    zoom() {
+        return this._zoom;
     }
 
-    static desplazar(nuevaPosEnfocar, velocidad){
+    setZoom(zoom) {
+        this._zoom = Math.max(0.1, Math.min(zoom, 10)); // Limitar zoom entre 0.1 y 10
+    }
 
+    zoomIn(amount = 0.1) {
+        this.setZoom(this._zoom + amount);
+    }
+
+    zoomOut(amount = 0.1) {
+        this.setZoom(this._zoom - amount);
+    }
+
+    rotation() {
+        return this._rotation;
+    }
+
+    setRotation(angle) {
+        this._rotation = angle;
+    }
+
+    // Establecer objetivo a seguir
+    setTarget(target, smoothing = 0.1) {
+        this._target = target;
+        this._smoothing = smoothing;
+    }
+
+    clearTarget() {
+        this._target = null;
+    }
+
+    // Establecer límites del mundo
+    setWorldBounds(minX, minY, maxX, maxY) {
+        this._worldBounds = { minX, minY, maxX, maxY };
+    }
+
+    clearWorldBounds() {
+        this._worldBounds = null;
+    }
+
+    // Limitar la cámara a los bounds del mundo
+    _clampToBounds() {
+        if (!this._worldBounds) return;
+
+        const halfWidth = (this._viewportWidth / 2) / this._zoom;
+        const halfHeight = (this._viewportHeight / 2) / this._zoom;
+
+        // Asegurar que la cámara no muestre área fuera del mundo
+        this._position.x = Math.max(this._worldBounds.minX + halfWidth, 
+                                    Math.min(this._position.x, this._worldBounds.maxX - halfWidth));
+        this._position.y = Math.max(this._worldBounds.minY + halfHeight, 
+                                    Math.min(this._position.y, this._worldBounds.maxY - halfHeight));
+    }
+
+    // Actualizar la cámara (llamar en cada frame)
+    update(dt) {
+        if (this._target) {
+            let targetPos;
+            
+            if (this._target.transform) {
+                // Es un Component
+                const transform = this._target.transform();
+                targetPos = new Vector2D(
+                    transform.position().x + transform.scale().x / 2,
+                    transform.position().y + transform.scale().y / 2
+                );
+            } else if (this._target.x !== undefined) {
+                // Es un Vector2D o objeto con x,y
+                targetPos = this._target;
+            }
+
+            if (targetPos) {
+                // Interpolación suave hacia el objetivo
+                this._position.x += (targetPos.x - this._position.x) * this._smoothing;
+                this._position.y += (targetPos.y - this._position.y) * this._smoothing;
+                this._clampToBounds();
+            }
+        }
+    }
+
+    // Centrar la cámara en una posición inmediatamente
+    centerOn(x, y) {
+        if (typeof x === 'object') {
+            this._position.x = x.x;
+            this._position.y = x.y;
+        } else {
+            this._position.x = x;
+            this._position.y = y;
+        }
+        this._clampToBounds();
+    }
+
+    // Mover la cámara
+    move(dx, dy) {
+        this._position.x += dx;
+        this._position.y += dy;
+        this._clampToBounds();
+    }
+
+    // Obtener los límites visibles de la cámara (AABB del viewport)
+    getVisibleBounds() {
+        const halfWidth = (this._viewportWidth / 2) / this._zoom;
+        const halfHeight = (this._viewportHeight / 2) / this._zoom;
+
+        return {
+            min_x: this._position.x - halfWidth,
+            min_y: this._position.y - halfHeight,
+            max_x: this._position.x + halfWidth,
+            max_y: this._position.y + halfHeight
+        };
+    }
+
+    // Verificar si un AABB está visible en la cámara (con margen extra)
+    isVisible(aabb) {
+        const bounds = this.getVisibleBounds();
+        // Agregar margen para evitar pop-in/pop-out en los bordes
+        const margin = 100;
+        return !(aabb.max_x < bounds.min_x - margin || 
+                 aabb.min_x > bounds.max_x + margin || 
+                 aabb.max_y < bounds.min_y - margin || 
+                 aabb.min_y > bounds.max_y + margin);
+    }
+
+    // Convertir coordenadas del mundo a coordenadas de pantalla
+    worldToScreen(worldX, worldY) {
+        const screenX = (worldX - this._position.x) * this._zoom + this._viewportWidth / 2;
+        const screenY = (worldY - this._position.y) * this._zoom + this._viewportHeight / 2;
+        return new Vector2D(screenX, screenY);
+    }
+
+    // Convertir coordenadas de pantalla a coordenadas del mundo
+    screenToWorld(screenX, screenY) {
+        const worldX = (screenX - this._viewportWidth / 2) / this._zoom + this._position.x;
+        const worldY = (screenY - this._viewportHeight / 2) / this._zoom + this._position.y;
+        return new Vector2D(worldX, worldY);
+    }
+
+    // Aplicar transformaciones de la cámara al contexto
+    applyTransform(ctx) {
+        ctx.translate(this._viewportWidth / 2, this._viewportHeight / 2);
+        ctx.rotate(this._rotation * Math.PI / 180);
+        ctx.scale(this._zoom, this._zoom);
+        ctx.translate(-this._position.x, -this._position.y);
+    }
+
+    // Restaurar el contexto (después de dibujar)
+    resetTransform(ctx) {
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+    }
+
+    // Obtener dimensiones del viewport
+    viewportWidth() {
+        return this._viewportWidth;
+    }
+
+    viewportHeight() {
+        return this._viewportHeight;
+    }
+
+    setViewportSize(width, height) {
+        this._viewportWidth = width;
+        this._viewportHeight = height;
     }
 }

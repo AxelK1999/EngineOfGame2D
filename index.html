@@ -5,10 +5,108 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pruebas de libreria 2D</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #1a1a2e;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+        }
+        
+        #controls-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(180deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.7) 70%, rgba(0,0,0,0) 100%);
+            color: white;
+            padding: 15px 20px;
+            z-index: 1000;
+            text-align: center;
+        }
+        
+        #controls-header h1 {
+            margin: 0 0 10px 0;
+            font-size: 1.5em;
+            color: #00ffff;
+            text-shadow: 0 0 10px #00ffff;
+        }
+        
+        .controls-grid {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 20px;
+            font-size: 0.9em;
+        }
+        
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .key {
+            background: linear-gradient(145deg, #3a3a5a, #2a2a4a);
+            border: 1px solid #5a5a8a;
+            border-radius: 5px;
+            padding: 5px 10px;
+            font-weight: bold;
+            color: #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            min-width: 30px;
+            text-align: center;
+        }
+        
+        .control-desc {
+            color: #aaa;
+        }
+        
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+        }
+    </style>
 </head>
 <body>
     
-    <div id = 'canvas-container'>
+    <div id="controls-header">
+        <h1>🎮 Engine 2D - Arena de Combate</h1>
+        <div class="controls-grid">
+            <div class="control-group">
+                <span class="key">W</span>
+                <span class="key">A</span>
+                <span class="key">S</span>
+                <span class="key">D</span>
+                <span class="control-desc">Mover (modo WASD)</span>
+            </div>
+            <div class="control-group">
+                <span class="key">T</span>
+                <span class="control-desc">Cambiar modo</span>
+            </div>
+            <div class="control-group">
+                <span class="key">Click</span>
+                <span class="control-desc">Disparar / Mover (modo Click)</span>
+            </div>
+            <div class="control-group">
+                <span class="key">Shift</span>
+                <span class="key">+</span>
+                <span class="key">Click</span>
+                <span class="control-desc">Disparar (modo Click)</span>
+            </div>
+            <div class="control-group">
+                <span class="key">Z</span>
+                <span class="key">X</span>
+                <span class="control-desc">Zoom +/-</span>
+            </div>
+        </div>
+        <p style="margin: 10px 0 0 0; color: #888; font-size: 0.8em;">
+            🔫 ¡Dispara a los enemigos! Se generan infinitamente | 🧱 Las paredes rebotan enemigos | 🗺️ Mini mapa arriba derecha
+        </p>
+    </div>
+
+    <div id="canvas-container">
         
     </div>
 
